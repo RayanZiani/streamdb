@@ -54,9 +54,11 @@ class NavBarWidget extends StatelessWidget {
               unselectedItemColor: colors.textSecondary,
               items: [
                 _buildNavItem(Icons.home_rounded, 'Accueil', 0, colors.primary),
-                _buildNavItem(Icons.search_rounded, 'Recherche', 1, colors.primary),
+                _buildNavItem(
+                    Icons.search_rounded, 'Recherche', 1, colors.primary),
                 _buildNavItem(Icons.star_rounded, 'Top', 2, colors.primary),
-                _buildNavItem(Icons.settings_rounded, 'Réglages', 3, colors.primary),
+                _buildNavItem(
+                    Icons.playlist_add_check, 'Playlist', 3, colors.primary),
               ],
             ),
           ),
@@ -65,14 +67,16 @@ class NavBarWidget extends StatelessWidget {
     );
   }
 
-  BottomNavigationBarItem _buildNavItem(IconData icon, String label, int index, Color primaryColor) {
+  BottomNavigationBarItem _buildNavItem(
+      IconData icon, String label, int index, Color primaryColor) {
     final isSelected = currentIndex == index;
     return BottomNavigationBarItem(
       icon: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: isSelected ? primaryColor.withOpacity(0.2) : Colors.transparent,
+          color:
+              isSelected ? primaryColor.withOpacity(0.2) : Colors.transparent,
           borderRadius: BorderRadius.circular(15),
         ),
         child: Icon(icon),
