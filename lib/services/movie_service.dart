@@ -169,7 +169,7 @@ class MovieService {
         }));
 
         final allContent = [...movies, ...shows]
-          ..sort((a, b) => (b.voteAverage ?? 0).compareTo(a.voteAverage ?? 0));
+          ..sort((a, b) => (b.voteAverage).compareTo(a.voteAverage));
         
         return allContent.take(10).toList();
       } else {
@@ -239,6 +239,43 @@ class MovieService {
         return List<Map<String, dynamic>>.from(data['genres']);
       } else {
         throw Exception('Failed to load genres: ${response.statusCode}');
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<List<Movie>> searchContent(String query) async {
+    if (query.isEmpty) return [];
+    
+    final url = '$baseUrl/search/multi?api_key=$apiKey'
+      '&language=fr-FR'
+      '&query=${Uri.encodeComponent(query)}'
+      '&include_adult=false'
+      '&page=1';
+    
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final results = (data['results'] as List)
+            .where((item) => 
+                item['media_type'] != 'person' && 
+                (item['poster_path'] != null || item['backdrop_path'] != null))
+            .map((item) => Movie.fromJson({
+                  'id': item['id'],
+                  'title': item['title'] ?? item['name'],
+                  'poster_path': item['poster_path'],
+                  'backdrop_path': item['backdrop_path'],
+                  'overview': item['overview'],
+                  'vote_average': item['vote_average'],
+                  'release_date': item['release_date'] ?? item['first_air_date'],
+                  'media_type': item['media_type']
+                }))
+            .toList();
+        return results;
+      } else {
+        throw Exception('Failed to search content: ${response.statusCode}');
       }
     } catch (e) {
       rethrow;

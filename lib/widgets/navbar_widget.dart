@@ -53,12 +53,14 @@ class NavBarWidget extends StatelessWidget {
               selectedItemColor: colors.primary,
               unselectedItemColor: colors.textSecondary,
               items: [
-                _buildNavItem(Icons.home_rounded, 'Accueil', 0, colors.primary),
                 _buildNavItem(
-                    Icons.search_rounded, 'Recherche', 1, colors.primary),
-                _buildNavItem(Icons.star_rounded, 'Top', 2, colors.primary),
+                  Icons.home_rounded, 'Accueil', 0, colors.primary),
                 _buildNavItem(
-                    Icons.playlist_add_check, 'Playlist', 3, colors.primary),
+                  Icons.search_rounded, 'Recherche', 1, colors.primary),
+                _buildNavItem(
+                  Icons.star_rounded, 'Top', 2, colors.primary),
+                _buildNavItem(
+                  Icons.playlist_play_outlined, 'Playlist', 3, colors.primary),
               ],
             ),
           ),
