@@ -20,6 +20,7 @@ dependencies:
   google_fonts: ^5.1.0
   smooth_page_indicator: ^1.1.0
   intl: ^0.20.1
+  vector_math: ^2.1.4
 
 dev_dependencies:
   flutter_test:

@@ -24,6 +24,9 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      setState(() {});
+    });
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 400),
       vsync: this,
@@ -166,21 +169,22 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
                 // ignore: unnecessary_null_comparison
                 child: movie.posterPath != null
                     ? Image.network(
-                        MovieService.getImageUrl(movie.posterPath),
-                        fit: BoxFit.cover,
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Center(
-                            child: CircularProgressIndicator(
-                              value: loadingProgress.expectedTotalBytes != null
-                                  ? loadingProgress.cumulativeBytesLoaded /
-                                      loadingProgress.expectedTotalBytes!
-                                  : null,
-                              color: primaryColor,
-                            ),
-                          );
-                        },
-                      )
+                      MovieService.getImageUrl(movie.posterPath),
+                      fit: BoxFit.cover,
+                      filterQuality: FilterQuality.high, // Réduit le flou
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Center(
+                          child: CircularProgressIndicator(
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
+                                : null,
+                            color: primaryColor,
+                          ),
+                        );
+                      },
+                    )
                     : Container(
                         color: backgroundColor,
                         alignment: Alignment.center,
@@ -307,6 +311,9 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
     return Scaffold(
       body: SafeArea(
         child: CustomScrollView(
+          physics: const BouncingScrollPhysics(), // Amélioration des performances de scrolling
+          clipBehavior: Clip.none,
+          cacheExtent: 1000,  
           slivers: [
             SliverToBoxAdapter(
               child: Column(
@@ -418,7 +425,9 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
                             child: child,
                           );
                         },
-                        child: _buildContentCard(movie, context),
+                        child: RepaintBoundary(
+                          child: _buildContentCard(movie, context),
+                        ),
                       );
                     },
                     childCount: _searchResults.length,
