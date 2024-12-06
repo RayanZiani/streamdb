@@ -3,11 +3,10 @@ import 'package:provider/provider.dart';
 import 'home_screen.dart';
 import 'ranking_screen.dart';
 import 'search_screen.dart';
-import 'settings_screen.dart';
+import 'playlist_screen.dart';
 import '../widgets/navbar_widget.dart';
 import '../providers/theme_providers.dart';
 import '../constants/theme_constants.dart';
-
 
 class MainScreen extends StatefulWidget {
   const MainScreen({Key? key}) : super(key: key);
@@ -22,7 +21,7 @@ class _MainScreenState extends State<MainScreen> {
     const HomeScreen(),
     const SearchScreen(),
     const RankingScreen(),
-    const SettingsScreen(),
+    const PlaylistScreen(),
   ];
 
   @override
