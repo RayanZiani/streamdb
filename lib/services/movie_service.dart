@@ -27,7 +27,7 @@ class MovieService {
     }
   }
 
-  Future<List<Movie>> getTopMovies2024() async {
+   Future<List<Movie>> getTopMovies2024() async {
     final url = '$baseUrl/discover/movie?api_key=$apiKey'
         '&language=fr-FR'
         '&sort_by=vote_average.desc'
@@ -131,8 +131,56 @@ class MovieService {
       rethrow;
     }
   }
-  
-  Future<List<Movie>> getTrendingAll() async {
+
+    Future<List<Movie>> getContentByGenre(int genreId) async {
+    final movieUrl = '$baseUrl/discover/movie?api_key=$apiKey'
+        '&language=fr-FR'
+        '&sort_by=vote_average.desc'
+        '&with_genres=$genreId'
+        '&vote_count.gte=100'
+        '&page=1';
+        
+    final tvUrl = '$baseUrl/discover/tv?api_key=$apiKey'
+        '&language=fr-FR'
+        '&sort_by=vote_average.desc'
+        '&with_genres=$genreId'
+        '&vote_count.gte=50'
+        '&page=1';
+    
+    try {
+      final movieResponse = await http.get(Uri.parse(movieUrl));
+      final tvResponse = await http.get(Uri.parse(tvUrl));
+      
+      if (movieResponse.statusCode == 200 && tvResponse.statusCode == 200) {
+        final movieData = json.decode(movieResponse.body);
+        final tvData = json.decode(tvResponse.body);
+        
+        final movies = (movieData['results'] as List).map((movie) => Movie.fromJson(movie));
+        
+        final shows = (tvData['results'] as List).map((show) => Movie.fromJson({
+          'id': show['id'],
+          'title': show['name'],
+          'poster_path': show['poster_path'],
+          'backdrop_path': show['backdrop_path'],
+          'overview': show['overview'],
+          'vote_average': show['vote_average'],
+          'release_date': show['first_air_date'],
+          'media_type': 'tv'
+        }));
+
+        final allContent = [...movies, ...shows]
+          ..sort((a, b) => (b.voteAverage ?? 0).compareTo(a.voteAverage ?? 0));
+        
+        return allContent.take(10).toList();
+      } else {
+        throw Exception('Failed to load content: ${movieResponse.statusCode}/${tvResponse.statusCode}');
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<List<Movie>> getTrendingContent() async {
     final url = '$baseUrl/trending/all/week?api_key=$apiKey&language=fr-FR';
     
     try {
@@ -148,19 +196,20 @@ class MovieService {
                   'overview': item['overview'],
                   'vote_average': item['vote_average'],
                   'release_date': item['release_date'] ?? item['first_air_date'],
+                  'media_type': item['media_type']
                 }))
             .take(6)
             .toList();
         return trending;
       } else {
-        throw Exception('Failed to load trending: ${response.statusCode}');
+        throw Exception('Failed to load trending content: ${response.statusCode}');
       }
     } catch (e) {
       rethrow;
     }
   }
 
-    Future<String> getMovieGenre(int movieId) async {
+  Future<String> getMovieGenre(int movieId) async {
     final url = '$baseUrl/movie/$movieId?api_key=$apiKey&language=fr-FR';
     
     try {

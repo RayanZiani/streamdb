@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../services/movie_service.dart';
-import '../models/movie.dart';
 import '../widgets/header_widget.dart';
 import '../providers/theme_providers.dart';
 import '../constants/theme_constants.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -13,121 +12,208 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
-  final MovieService _movieService = MovieService();
-  List<Movie> _movies = [];
-  bool _isLoading = true;
+class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
+  final PageController _pageController = PageController();
+  late final AnimationController _animationController;
+  int _currentPage = 0;
 
   @override
   void initState() {
     super.initState();
-    _loadMovies();
-  }
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 30),
+    )..repeat();
 
-  Future<void> _loadMovies() async {
-    try {
-      final movies = await _movieService.getPopularMovies();
-      setState(() {
-        _movies = movies;
-        _isLoading = false;
-      });
-    } catch (e) {
-      print('Erreur dans _loadMovies: $e');
-      setState(() {
-        _isLoading = false;
-      });
-    }
+    _pageController.addListener(() {
+      int page = _pageController.page?.round() ?? 0;
+      if (page != _currentPage) {
+        setState(() => _currentPage = page);
+      }
+    });
   }
 
   @override
-  Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final colors = themeProvider.isDarkMode ? AppColors.dark : AppColors.light;
+  void dispose() {
+    _pageController.dispose();
+    _animationController.dispose();
+    super.dispose();
+  }
 
-    return Scaffold(
-      backgroundColor: colors.background,
-      body: Column(
-        children: [
-          const HeaderWidget(
-            title: 'Découvrez',
-            subtitle: 'Les films populaires du moment',
+  Widget _buildCarouselSlide({
+    required String title,
+    required String description,
+    required IconData icon,
+    required List<Color> gradientColors,
+  }) {
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, _) {
+        
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: gradientColors,
+              stops: const [0.2, 0.8],
+            ),
+            borderRadius: BorderRadius.circular(32),
+            boxShadow: [
+              BoxShadow(
+                color: gradientColors[0].withOpacity(0.3),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
           ),
-          Expanded(
-            child: _isLoading
-                ? Center(
-                    child: CircularProgressIndicator(color: colors.primary),
-                  )
-                : _movies.isEmpty
-                    ? Text(
-                        'Aucun film trouvé',
-                        style: TextStyle(color: colors.text),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.only(bottom: 100),
-                        itemCount: _movies.length,
-                        itemBuilder: (context, index) {
-                          final movie = _movies[index];
-                          return Card(
-                            margin: const EdgeInsets.all(8),
-                            color: colors.cardBackground,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(32),
+            child: Stack(
+              children: [
+                // Animated patterns
+                ...List.generate(3, (index) {
+                  return Positioned.fill(
+                    child: AnimatedBuilder(
+                      animation: _animationController,
+                      builder: (context, child) {
+                        return Transform.rotate(
+                          angle: _animationController.value * 2 * 3.14159 * (index + 1),
+                          child: Opacity(
+                            opacity: 0.05,
+                            child: Icon(
+                              icon,
+                              size: 200 + (index * 100),
+                              color: Colors.white,
                             ),
-                            child: ListTile(
-                              title: Text(
-                                movie.title,
-                                style: TextStyle(
-                                  color: colors.text,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              subtitle: Text(
-                                movie.releaseDate,
-                                style: TextStyle(
-                                  color: colors.textSecondary,
-                                ),
-                              ),
-                              leading: ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: movie.posterPath.isNotEmpty
-                                    ? Image.network(
-                                        MovieService.getImageUrl(movie.posterPath),
-                                        width: 50,
-                                        height: 75,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) =>
-                                            Icon(
-                                              Icons.error,
-                                              color: colors.primary,
-                                            ),
-                                      )
-                                    : Icon(
-                                        Icons.movie,
-                                        color: colors.primary,
-                                      ),
-                              ),
-                              trailing: Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: colors.primary.withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  '${movie.voteAverage.toStringAsFixed(1)}',
-                                  style: TextStyle(
-                                    color: colors.text,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        },
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                }),
+
+                // Content
+                Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        icon,
+                        size: 48,
+                        color: Colors.white,
                       ),
+                      const SizedBox(height: 16),
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          height: 1.2,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        description,
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.9),
+                          fontSize: 16,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-        ],
-      ),
+        );
+      },
+    );
+  }
+
+@override
+  Widget build(BuildContext context) {
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, _) {
+        final colors = themeProvider.isDarkMode ? AppColors.dark : AppColors.light;
+
+        return Scaffold(
+          backgroundColor: colors.background,
+          body: SafeArea(
+            child: Column(
+              children: [
+                const HeaderWidget(
+                  title: 'Découvrez',
+                  subtitle: 'Votre nouvelle plateforme de streaming',
+                ),
+                Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          height: 320,
+                          child: PageView(
+                            controller: _pageController,
+                            children: [
+                              _buildCarouselSlide(
+                                title: 'StreamDB\nLe streaming réinventé',
+                                description: 'Une expérience cinématographique inégalée en 4K HDR avec Dolby Atmos.',
+                                icon: Icons.auto_awesome,
+                                gradientColors: [
+                                  colors.headerGradientStart,
+                                  colors.headerGradientMiddle,
+                                ],
+                              ),
+                              _buildCarouselSlide(
+                                title: 'Un catalogue\nsans limites',
+                                description: 'Des milliers de films et séries, enrichis quotidiennement pour votre plaisir.',
+                                icon: Icons.movie_creation,
+                                gradientColors: [
+                                  colors.primary,
+                                  colors.secondary,
+                                ],
+                              ),
+                              _buildCarouselSlide(
+                                title: 'Pack Opening\nPersonnalisé',
+                                description: 'Découvrez des contenus parfaitement adaptés à vos goûts grâce à notre IA.',
+                                icon: Icons.rocket_launch,
+                                gradientColors: [
+                                  colors.accent,
+                                  colors.primary,
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 16),
+                          child: SmoothPageIndicator(
+                            controller: _pageController,
+                            count: 3,
+                            effect: WormEffect(
+                              dotHeight: 8,
+                              dotWidth: 8,
+                              spacing: 8,
+                              activeDotColor: colors.primary,
+                              dotColor: colors.primary.withOpacity(0.2),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

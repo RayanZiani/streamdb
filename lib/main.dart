@@ -22,6 +22,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, _) => MaterialApp(
+        debugShowCheckedModeBanner: false, 
         title: 'MovieDB App',
         theme: themeProvider.isDarkMode ? AppTheme.darkTheme : AppTheme.lightTheme,
         home: const MainScreen(),
