@@ -409,6 +409,7 @@ class _RankingScreenState extends State<RankingScreen>
     Future<List<Movie>> futureMovies, {
     bool showGenre = false,
     bool isSeries = false,
+    bool useMediaType = false, 
   }) {
     return FadeTransition(
       opacity: _fadeAnimation,
@@ -444,6 +445,12 @@ class _RankingScreenState extends State<RankingScreen>
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     itemCount: snapshot.data!.length,
                     itemBuilder: (context, index) {
+                      final movie = snapshot.data![index];
+                      // Calcul du type de contenu
+                      final isSeriesContent = useMediaType 
+                          ? movie.mediaType == 'tv' 
+                          : isSeries;
+
                       // Décalage progressif des animations pour chaque carte
                       final itemAnimation = CurvedAnimation(
                         parent: _mainController,
@@ -458,7 +465,7 @@ class _RankingScreenState extends State<RankingScreen>
                         child: _buildMovieCard(
                           snapshot.data![index],
                           showGenre: showGenre,
-                          isSeries: isSeries,
+                          isSeries: isSeriesContent,  
                         ),
                       );
                     },
@@ -508,6 +515,7 @@ class _RankingScreenState extends State<RankingScreen>
                 'Top Films 2024',
                 _movieService.getTopMovies2024(),
                 showGenre: true,
+                isSeries: false,
               ),
               _buildMovieRow(
                 'Top Séries 2024',
@@ -517,10 +525,12 @@ class _RankingScreenState extends State<RankingScreen>
               _buildMovieRow(
                 'Tendances',
                 _movieService.getTrendingContent(),
+                useMediaType: true,
               ),
               _buildMovieRow(
                 'Contenu par genre',
                 _movieService.getContentByGenre(_selectedGenreId),
+                useMediaType: true,
               ),
               const SizedBox(height: 75),
             ],

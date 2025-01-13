@@ -28,10 +28,36 @@ class MovieService {
   }
 
    Future<List<Movie>> getTopMovies2024() async {
-    final url = '$baseUrl/discover/movie?api_key=$apiKey'
+    const url = '$baseUrl/discover/movie?api_key=$apiKey'
         '&language=fr-FR'
         '&sort_by=vote_average.desc'
         '&primary_release_year=2024'
+        '&vote_count.gte=100'
+        '&include_adult=false'
+        '&page=1';
+    
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final movies = (data['results'] as List)
+            .map((movie) => Movie.fromJson(movie))
+            .take(10)
+            .toList();
+        return movies;
+      } else {
+        throw Exception('Failed to load movies: ${response.statusCode}');
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<List<Movie>> getTopMovies2025() async {
+    const url = '$baseUrl/discover/movie?api_key=$apiKey'
+        '&language=fr-FR'
+        '&sort_by=vote_average.desc'
+        '&primary_release_year=2025'
         '&vote_count.gte=100'
         '&include_adult=false'
         '&page=1';
@@ -99,7 +125,7 @@ class MovieService {
   }
 
   Future<List<Movie>> getTopTVShows2024() async {
-    final url = '$baseUrl/discover/tv?api_key=$apiKey'
+    const url = '$baseUrl/discover/tv?api_key=$apiKey'
         '&language=fr-FR'
         '&sort_by=vote_average.desc'
         '&first_air_date_year=2024'
@@ -132,7 +158,41 @@ class MovieService {
     }
   }
 
-    Future<List<Movie>> getContentByGenre(int genreId) async {
+    Future<List<Movie>> getTopTVShows2025() async {
+    const url = '$baseUrl/discover/tv?api_key=$apiKey'
+        '&language=fr-FR'
+        '&sort_by=vote_average.desc'
+        '&first_air_date_year=2025'
+        '&vote_count.gte=50'
+        '&include_adult=false'
+        '&page=1';
+    
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final shows = (data['results'] as List)
+            .map((show) => Movie.fromJson({
+                  'id': show['id'],
+                  'title': show['name'],
+                  'poster_path': show['poster_path'],
+                  'backdrop_path': show['backdrop_path'],
+                  'overview': show['overview'],
+                  'vote_average': show['vote_average'],
+                  'release_date': show['first_air_date'],
+                }))
+            .take(10)
+            .toList();
+        return shows;
+      } else {
+        throw Exception('Failed to load TV shows: ${response.statusCode}');
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<List<Movie>> getContentByGenre(int genreId) async {
     final movieUrl = '$baseUrl/discover/movie?api_key=$apiKey'
         '&language=fr-FR'
         '&sort_by=vote_average.desc'
@@ -181,7 +241,7 @@ class MovieService {
   }
 
   Future<List<Movie>> getTrendingContent() async {
-    final url = '$baseUrl/trending/all/week?api_key=$apiKey&language=fr-FR';
+    const url = '$baseUrl/trending/all/week?api_key=$apiKey&language=fr-FR';
     
     try {
       final response = await http.get(Uri.parse(url));
@@ -230,7 +290,7 @@ class MovieService {
   }
 
   Future<List<Map<String, dynamic>>> getGenres() async {
-    final url = '$baseUrl/genre/movie/list?api_key=$apiKey&language=fr-FR';
+    const url = '$baseUrl/genre/movie/list?api_key=$apiKey&language=fr-FR';
     
     try {
       final response = await http.get(Uri.parse(url));
